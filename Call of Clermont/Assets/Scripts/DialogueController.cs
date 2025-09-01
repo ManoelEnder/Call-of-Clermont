@@ -23,7 +23,7 @@ public class DialogueController : MonoBehaviour
 
     [Header("Config")]
     public List<DialogueLine> lines = new List<DialogueLine>();
-    public float charsPerSecond = 40f;
+    public float charsPerSecond = 35f;
     public float punctuationPause = 0.25f; 
     public KeyCode advanceKey = KeyCode.Mouse0; 
 
