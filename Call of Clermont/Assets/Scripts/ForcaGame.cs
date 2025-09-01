@@ -7,135 +7,118 @@ public class ForcaGame : MonoBehaviour
 {
     public TMP_Text dicaText;
     public TMP_Text palavraText;
-    public TMP_Text chancesText;
     public TMP_InputField inputField;
-    public AudioSource somErro;
-    public Image telaVermelha;
-    public Button botaoIniciar; // Novo: Botão pra começar o jogo
+    public Button chuteLetraButton;
+    public Button chutePalavraButton;
+    public TMP_Text chancesText;
 
-    private string palavraSecreta = "PAPA URBANO II";
-    private string palavraOculta;
+    private string palavraSecreta = "Papa Urbano II";
+    private char[] palavraAtual;
     private int chances = 20;
-    private bool jogoAtivo = false;
-    private bool mostrandoDica = true;
-    private string dica = "Essa pessoa convocou a Primeira Cruzada.";
+
+    public float delayDepoisDica = 2f;
+    public float velocidadeTexto = 0.05f;
 
     void Start()
     {
-        palavraSecreta = palavraSecreta.ToUpper();
-        palavraOculta = "";
-        foreach (char c in palavraSecreta)
-        {
-            if (c == ' ') palavraOculta += " ";
-            else palavraOculta += "_";
-        }
-
-        dicaText.text = "";
-        palavraText.text = "";
-        chancesText.text = "";
+        // Esconde tudo no começo
         inputField.gameObject.SetActive(false);
-        botaoIniciar.gameObject.SetActive(true); // Botão visível no começo
+        chuteLetraButton.gameObject.SetActive(false);
+        chutePalavraButton.gameObject.SetActive(false);
+        chancesText.gameObject.SetActive(false); // <-- aqui esconde as chances
+
+        palavraAtual = new string('_', palavraSecreta.Length).ToCharArray();
+        MostrarDica("Foi o papa que convocou a Primeira Cruzada");
     }
 
-    // Função chamada pelo botão de iniciar
-    public void IniciarComBotao()
+    void MostrarDica(string mensagem)
     {
-        botaoIniciar.interactable = false; // Desativa o botão
-        botaoIniciar.gameObject.SetActive(false); // Esconde o botão (opcional, tu escolhe)
-        StartCoroutine(MostrarDica());
+        dicaText.text = "";
+        StartCoroutine(DigitarTexto(mensagem));
     }
 
-    IEnumerator MostrarDica()
+    IEnumerator DigitarTexto(string mensagem)
     {
-        foreach (char letra in dica)
+        foreach (char letra in mensagem.ToCharArray())
         {
             dicaText.text += letra;
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(velocidadeTexto);
         }
 
-        yield return new WaitUntil(() => Input.GetMouseButtonDown(0));
+        yield return new WaitForSeconds(delayDepoisDica);
 
-        dicaText.text = "";
-        mostrandoDica = false;
-        IniciarJogo();
-    }
+        dicaText.gameObject.SetActive(false);
+        palavraText.text = new string(palavraAtual);
 
-    void IniciarJogo()
-    {
-        jogoAtivo = true;
-        palavraText.text = palavraOculta;
+        // Agora mostra as chances só depois da dica sumir
+        chancesText.gameObject.SetActive(true);
         chancesText.text = "Chances: " + chances;
+
         inputField.gameObject.SetActive(true);
-        inputField.ActivateInputField(); // Foca no campo de input
+        chuteLetraButton.gameObject.SetActive(true);
+        chutePalavraButton.gameObject.SetActive(true);
     }
 
-    public void VerificarInput()
+    public void ChutarLetra()
     {
-        if (!jogoAtivo) return;
+        if (inputField.text.Length == 0) return;
 
-        string tentativa = inputField.text.ToUpper();
-        inputField.text = "";
+        char letra = char.ToLower(inputField.text[0]);
+        bool acertou = false;
 
-        if (tentativa.Length > 1)
+        for (int i = 0; i < palavraSecreta.Length; i++)
         {
-            if (tentativa == palavraSecreta)
+            if (char.ToLower(palavraSecreta[i]) == letra)
             {
-                Venceu();
-            }
-            else
-            {
-                Errou();
+                palavraAtual[i] = palavraSecreta[i];
+                acertou = true;
             }
         }
-        else if (tentativa.Length == 1)
+
+        if (!acertou)
         {
-            char letra = tentativa[0];
-            bool acertou = false;
-            char[] palavraArray = palavraOculta.ToCharArray();
-
-            for (int i = 0; i < palavraSecreta.Length; i++)
-            {
-                if (palavraSecreta[i] == letra && palavraArray[i] == '_')
-                {
-                    palavraArray[i] = letra;
-                    acertou = true;
-                }
-            }
-
-            palavraOculta = new string(palavraArray);
-            palavraText.text = palavraOculta;
-
-            if (!acertou) Errou();
-            else if (palavraOculta == palavraSecreta) Venceu();
+            chances--;
+            StartCoroutine(DanoFeedback());
         }
-    }
 
-    void Errou()
-    {
-        chances--;
+        palavraText.text = new string(palavraAtual);
         chancesText.text = "Chances: " + chances;
-        somErro.Play();
-        StartCoroutine(EfeitoVermelho());
 
-        if (chances <= 0)
+        if (new string(palavraAtual) == palavraSecreta)
         {
-            jogoAtivo = false;
-            palavraText.text = "Você perdeu! A palavra era: " + palavraSecreta;
-            inputField.gameObject.SetActive(false); // Desativa input no fim
+            Debug.Log("Você ganhou!");
         }
+        else if (chances <= 0)
+        {
+            Debug.Log("Você perdeu!");
+        }
+
+        inputField.text = "";
     }
 
-    IEnumerator EfeitoVermelho()
+    public void ChutarPalavra()
     {
-        telaVermelha.color = new Color(1, 0, 0, 0.5f);
-        yield return new WaitForSeconds(0.3f);
-        telaVermelha.color = new Color(1, 0, 0, 0);
+        string chute = inputField.text;
+
+        if (chute.ToLower() == palavraSecreta.ToLower())
+        {
+            palavraText.text = palavraSecreta;
+            Debug.Log("Você ganhou!");
+        }
+        else
+        {
+            chances--;
+            chancesText.text = "Chances: " + chances;
+            StartCoroutine(DanoFeedback());
+        }
+
+        inputField.text = "";
     }
 
-    void Venceu()
+    IEnumerator DanoFeedback()
     {
-        jogoAtivo = false;
-        palavraText.text = "Você ganhou! A palavra era: " + palavraSecreta;
-        inputField.gameObject.SetActive(false); // Desativa input no fim
+        Camera.main.backgroundColor = Color.red;
+        yield return new WaitForSeconds(0.2f);
+        Camera.main.backgroundColor = Color.black;
     }
 }
