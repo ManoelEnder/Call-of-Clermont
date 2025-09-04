@@ -15,7 +15,7 @@ public class MenuPrincipal : MonoBehaviour
 
     public void VoltarMenu()
     {
-        SceneManager.LoadScene("MenuPrincipal");
+        SceneManager.LoadScene("Menu");
     }
 
     public void Sair()
@@ -26,5 +26,25 @@ public class MenuPrincipal : MonoBehaviour
     public void Jogo1()
     {
         SceneManager.LoadScene("Jogo1");
+    }
+    public void Introducao()
+    {
+        SceneManager.LoadScene("Introdução");
+    }
+    public void VoltarJogo()
+    {
+        SceneManager.LoadScene("Jogo1");
+    }
+    public void Jogo3()
+    {
+        SceneManager.LoadScene("Jogo3");
+    }
+    public void CenaFinal()
+    {
+        SceneManager.LoadScene("CenaFinal");
+    }
+    public void Jogo4()
+    {
+        SceneManager.LoadScene("Jogo4");
     }
 }

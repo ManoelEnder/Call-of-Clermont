@@ -11,30 +11,44 @@ public class ForcaGame : MonoBehaviour
     public Button chuteLetraButton;
     public Button chutePalavraButton;
     public TMP_Text chancesText;
+    public Button dicaButton;
 
     private string palavraSecreta = "Papa Urbano II";
     private char[] palavraAtual;
-    private int chances = 20;
+    private int chances = 10;
 
-    public float delayDepoisDica = 2f;
     public float velocidadeTexto = 0.05f;
+
+    private string dicaMensagem = "Foi o papa que convocou a Primeira Cruzada";
+    private bool jogoComecou = false;
 
     void Start()
     {
-        // Esconde tudo no começo
         inputField.gameObject.SetActive(false);
         chuteLetraButton.gameObject.SetActive(false);
         chutePalavraButton.gameObject.SetActive(false);
-        chancesText.gameObject.SetActive(false); // <-- aqui esconde as chances
+        chancesText.gameObject.SetActive(false);
+        dicaText.gameObject.SetActive(false);
 
         palavraAtual = new string('_', palavraSecreta.Length).ToCharArray();
-        MostrarDica("Foi o papa que convocou a Primeira Cruzada");
+
+        dicaButton.onClick.AddListener(() => MostrarDica());
+
+        MostrarDica();
     }
 
-    void MostrarDica(string mensagem)
+    void MostrarDica()
     {
+        StopAllCoroutines();
+        dicaText.gameObject.SetActive(true);
         dicaText.text = "";
-        StartCoroutine(DigitarTexto(mensagem));
+        StartCoroutine(DigitarTexto(dicaMensagem));
+
+        if (!jogoComecou)
+        {
+            jogoComecou = true;
+            StartCoroutine(AtivarJogoDepoisDica());
+        }
     }
 
     IEnumerator DigitarTexto(string mensagem)
@@ -44,13 +58,15 @@ public class ForcaGame : MonoBehaviour
             dicaText.text += letra;
             yield return new WaitForSeconds(velocidadeTexto);
         }
+    }
 
-        yield return new WaitForSeconds(delayDepoisDica);
+    IEnumerator AtivarJogoDepoisDica()
+    {
+        yield return new WaitForSeconds(dicaMensagem.Length * velocidadeTexto + 1f);
 
         dicaText.gameObject.SetActive(false);
-        palavraText.text = new string(palavraAtual);
 
-        // Agora mostra as chances só depois da dica sumir
+        palavraText.text = new string(palavraAtual);
         chancesText.gameObject.SetActive(true);
         chancesText.text = "Chances: " + chances;
 
@@ -100,7 +116,7 @@ public class ForcaGame : MonoBehaviour
     {
         string chute = inputField.text;
 
-        if (chute.ToLower() == palavraSecreta.ToLower())
+        if (chute.Trim().ToLower() == palavraSecreta.ToLower())
         {
             palavraText.text = palavraSecreta;
             Debug.Log("Você ganhou!");
